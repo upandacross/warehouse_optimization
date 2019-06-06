@@ -104,4 +104,4 @@ venv.bak/
 .mypy_cache/
 
 # testing artifacts
-# pick_route_*.txt
+pick_route_*.txt
