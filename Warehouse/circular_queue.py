@@ -38,7 +38,6 @@ unit testing.
     __name__ = 'RandomizedCircularQueue'
     
     def __init__(self, items):
-        self.__myseed = randint(10000)
         self.__seed = RandomizedCircularQueue.__seed
         RandomizedCircularQueue.__seed += 1
         super().__init__(items)
