@@ -105,3 +105,6 @@ venv.bak/
 
 # testing artifacts
 pick_route_*.txt
+
+# backups
+*.tar
