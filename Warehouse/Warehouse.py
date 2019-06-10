@@ -58,7 +58,7 @@ Assumptions:
 
     def __repr__(self):
         return '''racks: {}, dock (lat, long): {}, inventory has {:,d} item_no, {:,d} quantities'''\
-                .format(len(self.__racks), (self.__dock_lat_long),
+                .format(len(self.__racks), (self.__dock.lat, self.__dock.long),
                         len(Warehouse.__inventory.stock),
                         sum(Warehouse.__inventory.stock.values()))
     

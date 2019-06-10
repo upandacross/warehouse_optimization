@@ -31,6 +31,8 @@ class Test(unittest.TestCase):
         self.assertEqual((w.dock.lat, w.dock.long), (0, 7), \
                          'dock_lat_long SBE (0, 7), is {}'.format((w.dock.lat,
                                                                    w.dock.long)))
+        self.assertEqual(w.__repr__(), 'racks: 5, dock (lat, long): (0, 7), inventory has 0 item_no, 0 quantities',
+                         'repr should not be "{}"'.format(w.__repr__()))
                          
         
     def testUpdateStockSingle(self):
