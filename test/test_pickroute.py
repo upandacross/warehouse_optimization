@@ -108,19 +108,9 @@ class Test(unittest.TestCase):
                                                          else ''))
         # print(os.path.curdir)
         # I'm missing a random.seed somewhere
-        #self.assertEqual(pr.route_distance, 86, 'route_distince SBE 86, is {}'.format(pr.route_distance))
+        self.assertEqual(pr.route_distance, expected_steps,
+                         'route_distince SBE {}, is {}'.format(expected_steps, pr.route_distance))
 
-        if pr.route_distance != expected_steps:
-            if not os.path.isfile('pick_route_diff.txt'):
-                with open('pick_route_diff.txt', 'w') as ofile:
-                    for (f, t) in pr.route:
-                        ofile.write('\tfrom: {}\tto: {}\n'.format(f, t))
-        else:
-            if not os.path.isfile('pick_route.txt'):
-                with open('pick_route_{}.txt'.format(expected_steps), 'w') as ofile:
-                    for (f, t) in pr.route:
-                        ofile.write('\tfrom: {}\tto: {}\n'.format(f, t))
-            
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
