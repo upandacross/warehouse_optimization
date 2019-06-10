@@ -29,10 +29,17 @@ class Test(unittest.TestCase):
     def testRandomizedCircularQueue(self):
         cq = RandomizedCircularQueue(range(5))
         self.assertEqual(cq.seed, 1, 'seed SBE 1, is {}'.format(cq.seed))
+        r = [o for o in range(5)]
+        seed(cq.seed)
+        shuffle(r)
+        cqs = [cq.item for _ in range(5)]
+        for i, s in zip(r, cqs):
+            self.assertEqual(i, s, 'cq.item should return {}, is {}'.format(i, s))
+
         cq = RandomizedCircularQueue(range(5))
         self.assertEqual(cq.seed, 2, 'seed SBE 2, is {}'.format(cq.seed))
         r = [o for o in range(5)]
-        seed(2)
+        seed(cq.seed)
         shuffle(r)
         cqs = [cq.item for _ in range(5)]
         for i, s in zip(r, cqs):
