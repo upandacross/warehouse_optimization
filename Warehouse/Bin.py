@@ -1,5 +1,6 @@
 from _collections import defaultdict
 from functools import total_ordering
+import numpy
 
 class Bin:
     
@@ -113,8 +114,9 @@ class Bin:
         self.__bin_side = side # a or b
         self.__bin_no = bin_no
         self.__location = Bin.Bin_Location(rack_no, side, bin_no)
-        self.__lat = bin_no + 1 if bin_no > 0 else 0 # dock is bin_no 0 at lat 0
-        self.__long =  long = (rack_no * 3) - 2 if side == 'a' else (rack_no * 3) - 1
+        lat = bin_no + 1 if bin_no > 0 else 0 # dock is bin_no 0 at lat 0
+        long = (rack_no * 3) - 2 if side == 'a' else (rack_no * 3) - 1
+        self.__lat_long = numpy.array([lat, long])
         self.__item = item
         self.__count = count
 
@@ -143,7 +145,7 @@ class Bin:
         rtn =  'rack_no: {}, bin_no: {}, bin_side: {} '\
                 .format(self.__rack_no, self.__bin_no, self.__bin_side)
         rtn += 'lat: {}, long: {}, item: {}, count: {} '\
-                 .format(self.__lat, self.__long,
+                 .format(self.__lat_long[0], self.__lat_long[1],
                          self.__item, self.__count)
 
         return rtn
@@ -182,8 +184,12 @@ class Bin:
         raise RuntimeError('bin location set by init')
 
     @property
+    def lat_long(self):
+        return self.__lat_long
+
+    @property
     def lat(self):
-        return self.__lat
+        return self.__lat_long[0]
 
     @lat.setter
     def lat(self, *args):
@@ -191,7 +197,7 @@ class Bin:
 
     @property
     def long(self):
-        return self.__long
+        return self.__lat_long[1]
 
     @long.setter
     def long(self, *args):
