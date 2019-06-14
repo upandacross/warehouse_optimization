@@ -64,16 +64,13 @@ Assumptions:
     
 
     @classmethod
-    def update_stock(cls, item_no, qty, location=None):
+    def update_stock(cls, item_no, qty, location):
         '''
         Use Inventory.update_stock if called w/o location or with location == None so qty will be divided among bins holding item
         Use Inventory.update_bin if called with location
 '''
-        if location is None:
-            cls.__inventory.update_stock(item_no, qty)
-        else:
-            assert isinstance(location, Bin.Bin_Location), 'update_stock SBE called with nlocation = None or instance of Bin_Location'
-            cls.__inventory.update_bin(location, item_no, qty)
+        assert isinstance(location, Bin.Bin_Location), 'update_stock SBE called with nlocation = None or instance of Bin_Location'
+        cls.__inventory.update_bin(location, item_no, qty)
 
 
     def get_stock_qty(self, item_no):
