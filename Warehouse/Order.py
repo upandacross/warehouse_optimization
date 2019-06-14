@@ -11,7 +11,6 @@ class Order:
     from collections import namedtuple
     order_item = namedtuple('order_item', ('line_no', 'item_no', 'qty', 'status'))
 
-    __orders = set()
     __last_order_no = 0
     
     __inventory = Inventory()
@@ -22,7 +21,6 @@ class Order:
         '''
         clear needed to keep unit tests independent
 '''
-        cls.__orders = set()
         cls.__last_order_no = 0
         pass # for debugging
     
@@ -31,14 +29,8 @@ class Order:
         return cls.__last_order_no
 
 
-    @classmethod
-    def get_orders(self):
-        return self.__orders
-    
-
     def __init__(self):
         Order.__last_order_no += 1
-        Order.__orders.add(self)
         self.__order_no__ = 0 + Order.__last_order_no
         self.__lines = []
         self.__last_line_no = 0

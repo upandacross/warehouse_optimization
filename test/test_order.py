@@ -28,7 +28,6 @@ class TestOrder(unittest.TestCase):
         self.assertEqual(o1.order_no, 1, 'first order SBE order_no 1, is {}'.format(o1.order_no))
         o2 = Order()
         self.assertEqual(o2.order_no, 2, 'first order SBE order_no 2, is {}'.format(o2.order_no))
-        self.assertEqual(len(o1.get_orders()), 2, 'SBE 2 orders, is {}'.format(len(o1.get_orders())))
 
 
     def testAddLine(self):
