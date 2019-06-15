@@ -1,4 +1,3 @@
-from collections import Iterable
 from collections import deque
 from numpy.random import shuffle, randint, seed
 
@@ -12,7 +11,7 @@ the first item. This process continues without end.
     __name__ = 'CircularQueue'
 
     def __init__(self, items):
-        assert isinstance(items, Iterable), 'items argument must be iterable'
+        assert '__iter__' in items.__dir__(), 'items argument must be iterable'
         self.__myitems = []
         self.__items = self.prepItems(items)
         
