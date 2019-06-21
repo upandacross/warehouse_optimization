@@ -108,3 +108,8 @@ pick_route_*.txt
 
 # backups
 *.tar
+
+# text / tmp files
+*.ods
+*.txt
+*.pkl
