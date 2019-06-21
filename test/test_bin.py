@@ -181,16 +181,16 @@ class Test(unittest.TestCase):
     def testDropBin(self):
         # del Bin.__bin_locations[location]
         Bin.clear()
-        self.assertEqual(Bin.bin_locations(), 0, 'clear method should reset class list of prior Bin instances')
+        self.assertEqual(len(Bin.bin_locations), 0, 'clear method should reset class list of prior Bin instances')
         bl1 = Bin(rack_no=1, side='a', bin_no=1)
         bl2 = Bin(rack_no=1, side='a', bin_no=2)
-        self.assertEqual(Bin.bin_locations(), 2, 
+        self.assertEqual(len(Bin.bin_locations), 2, 
                          'class list of Bin instances SBE len 2, is {}'\
-                         .format(Bin.bin_locations()))
+                         .format(len(Bin.bin_locations)))
         Bin.drop_bin(bl1.location)
-        self.assertEqual(Bin.bin_locations(), 1, 
+        self.assertEqual(len(Bin.bin_locations), 1, 
                          'class list of Bin instances SBE len 1 after drop_bin, is {}'\
-                         .format(Bin.bin_locations()))
+                         .format(len(Bin.bin_locations)))
         self.assertEqual(bl2, Bin.get_bin_by_location(bl2.location), 
                          'bin at {} should still be in bin instance list after drop'\
                          .format(bl2.location))
