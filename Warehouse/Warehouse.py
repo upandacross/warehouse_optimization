@@ -18,49 +18,48 @@ Assumptions:
     shortest route from one bin to another goes through the rack end (cap) closest to the destination bin
 '''
 
-    from collections import defaultdict
-
     __instance = None
-    Inventory.clear() # belt and suspenders
     __inventory = Inventory()
 
     @classmethod
     def clear(cls):
-        cls.__instance = None
         Inventory.clear()
 
     @classmethod
     def reset(cls, racks, bins):
         cls.__instance = None                      # clear __instance so __init__ doen't fail
-        cls.__instance = Warehouse(racks, bins)    # Now the initialization can be called
+        cls.__instance = Warehouse(racks=racks, bins=bins)    # Now the initialization can be called
         Inventory.clear()
         return cls.__instance
 
-    def __init__(self, racks, bins):
-        assert isinstance(racks, int) and racks > 0, \
-            'number of racks must be int > 0'
-        assert isinstance(bins, int) and bins > 0, \
-            'number of bins must be int > 0'
+    def __init__(self, racks=None, bins=None):
 
         if type(self).__instance is None:
             # Initialization
+            assert isinstance(racks, int) and racks > 0, \
+                'number of racks must be int > 0'
+            assert isinstance(bins, int) and bins > 0, \
+                'number of bins must be int > 0'
+
             type(self).__instance = self
 
             dock_rack = round((racks / 2) + .1) # friggin "Banker's rounding!
             self.__dock = Bin(rack_no=dock_rack, side='a', bin_no=0)
+            self.__dock.nearest_cap = self.__dock
+            self.__dock.nearest_cap_distance = 0
             self.__racks_bins = (racks, bins)
             self.__racks = [Rack(rack_no = x, bin_count=bins) 
                             for x in range(1, racks + 1, 1)]
             self.__bins = [list(r.bins_a.values()) + list(r.bins_b.values())
                            for r in self.__racks][0]
         else:
-            raise RuntimeError('Try Warehouse.clear() or Warehouse.reset(racks, bins)')
+            self.__dict__ = Warehouse.__instance.__dict__
 
     def __repr__(self):
         return '''racks: {}, dock (lat, long): {}, inventory has {:,d} item_no, {:,d} quantities'''\
                 .format(len(self.__racks), (self.__dock.lat, self.__dock.long),
                         len(Warehouse.__inventory.stock),
-                        sum(Warehouse.__inventory.stock.values()))
+                        sum(b.count for b in Bin.bin_locations.values()))
     
 
     @classmethod
