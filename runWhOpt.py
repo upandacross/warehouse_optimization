@@ -107,38 +107,6 @@ USAGE
 		# Process arguments
 		args = parser.parse_args()
 
-		verbose = args.verbose
-		racks = args.racks
-		bins = args.bins
-		NGENS = args.gens
-		restore = args.restore
-
-		if len(restore) > 0:
-			if not os.path.isfile(restore):
-				print('restore file {} does not exist'.format(restore))
-				sys.exit(2)
-			else:
-				RESTORE=True
-		else:
-				RESTORE=False
-				
-		if verbose:
-			print("Verbose mode on")
-
-		if racks > 0:
-			NUM_RACKS = racks
-			if verbose:
-				print("{} racks".format(racks))
-		else:
-			raise RuntimeError('must be int > 0 number of racks')
-
-		if bins > 0:
-			NUM_RACK_SIDE_BINS = bins
-			if verbose:
-				print("{} bins".format(bins))
-		else:
-			raise RuntimeError('must be int > 0 number of bins on each side of rack')
-
 	except KeyboardInterrupt:
 		### handle keyboard interrupt ###
 		return 0
@@ -151,52 +119,89 @@ USAGE
 		return 2
 	
 	
-	if verbose or RESULTS: 
-		print('simulate warehouse with {} racks and {} bins on each side'.format(racks, bins))
-	
 	########################################################################
 	# this will be parallelized - TBD: create class MyGlobals and pickle it for 
 	# multiprocesses
 	
-	NUM_BINS = NUM_RACKS * NUM_RACK_SIDE_BINS * 2 # two sides to a rack
-	INDXS = np.arange(NUM_BINS)
-	NUM_ORDERS = NUM_BINS * 10
-	ORDER_LINES = 15
+	class MyEnv:
+		def __init__(self, args, CXPB=0.7):
+			restore = args.restore
+			if len(restore) > 0:
+				if not os.path.isfile(restore):
+					print('restore file {} does not exist'.format(restore))
+					sys.exit(2)
+				else:
+					self.RESTORE=True
+			else:
+					self.RESTORE=False
 	
-	CXPB=0.7
-	MUTPB=1.0 - CXPB
+			self.verbose = args.verbose
+			racks = args.racks
+			bins = args.bins
+			
+			self.NGENS = args.gens
 
-	wh = Warehouse(NUM_RACKS, NUM_RACK_SIDE_BINS)
+			if self.verbose:
+				print("Verbose mode on")
 	
-	rsb = [(r, s, b) for r, s, b in product(range(NUM_RACKS), list('ab'),
-										range(1, NUM_RACK_SIDE_BINS + 1, 1))]
-	idxs = np.arange(NUM_BINS)
+			if racks > 0:
+				self.NUM_RACKS = racks
+				if self.verbose:
+					print("{} racks".format(racks))
+			else:
+				raise RuntimeError('must be int > 0 number of racks')
+	
+			if bins > 0:
+				self.NUM_RACK_SIDE_BINS = bins
+				if self.verbose:
+					print("{} bins".format(bins))
+			else:
+				raise RuntimeError('must be int > 0 number of bins on each side of rack')
+			
+			self.NUM_BINS = self.NUM_RACKS * self.NUM_RACK_SIDE_BINS * 2 # two sides to a rack
+			self.INDXS = np.arange(self.NUM_BINS)
+			self.NUM_ORDERS = self.NUM_BINS * 10
+			self.ORDER_LINES = 15
+	
+			self.CXPB=CXPB
+			self.MUTPB=1.0 - CXPB
 
-	orders = []	
-	seed(42)
-	for _ in range(NUM_ORDERS):
-		o = Order()
-		o_items = choice(range(1, NUM_BINS + 1), size=ORDER_LINES, replace=False)
-		for itm in o_items:
-			o.add_line(item_no=int(itm), qty=10)
-		orders.append(o)
+			self.wh = Warehouse(self.NUM_RACKS, self.NUM_RACK_SIDE_BINS)
 	
-	if RESTORE:
-		with open(restore, 'rb') as infile:
-			pop = pickle.load(infile)
-		plen = len(pop[0])
-		# reset pop_id and fitness = 0
-		pop = [Individual(shape=(plen,), buffer=p) for p in pop]
-		pass # for debugging	
-	else:
-		pop = list()
-		for _ in range(1, NUM_BINS + 1):
-			# individulas contain a shuffled list of item_no
-			# bins contain a fixed qty of an item_no selected from a shuffled list
-			# the fitness attribute will be set to number of steps required to fulfill orders from items when so distributed in wh
-			pop.append(Individual(shape=(NUM_BINS,)))
+			self.rsb = [(r, s, b) for r, s, b in product(range(self.NUM_RACKS), list('ab'),
+														 range(1, self.NUM_RACK_SIDE_BINS + 1, 1))]
+			self.idxs = np.arange(self.NUM_BINS)
+
+			self.orders = []	
+			seed(42)
+			for _ in range(self.NUM_ORDERS):
+				o = Order()
+				o_items = choice(range(1, self.NUM_BINS + 1), size=self.ORDER_LINES, replace=False)
+				for itm in o_items:
+					o.add_line(item_no=int(itm), qty=10)
+				self.orders.append(o)
+	
+			if self.RESTORE:
+				with open(restore, 'rb') as infile:
+					self.pop = pickle.load(infile)
+				plen = len(self.pop[0])
+				# reset pop_id and fitness = 0
+				self.pop = [Individual(shape=(plen,), buffer=p) for p in self.pop]
+				pass # for debugging	
+			else:
+				self.pop = list()
+				for _ in range(1, self.NUM_BINS + 1):
+					# individulas contain a shuffled list of item_no
+					# bins contain a fixed qty of an item_no selected from a shuffled list
+					# the fitness attribute will be set to number of steps required to fulfill orders from items when so distributed in wh
+					self.pop.append(Individual(shape=(self.NUM_BINS,)))
 	
 
+	myenv = MyEnv(args)
+	
+	if myenv.verbose or RESULTS: 
+		print('simulate warehouse with {} racks and {} bins on each side'.format(myenv.NUM_RACKS, myenv.NUM_BINS))
+	
 	##########################################################
 	# support functions
 	
@@ -204,18 +209,18 @@ USAGE
 		if individual.fitness != Individual.default_fitness():
 			return individual.fitness
 		
-		wh.clear()
+		myenv.wh.clear()
 	
-		for i, (r, s, bn) in zip(individual, rsb):
+		for i, (r, s, bn) in zip(individual, myenv.rsb):
 			if s == 'a':
-				b = wh.racks[r].bins_a[bn]
+				b = myenv.wh.racks[r].bins_a[bn]
 			else: # s == 'b'
-				b = wh.racks[r].bins_b[bn]
-			wh.update_stock(int(i), 10, b.location)
+				b = myenv.wh.racks[r].bins_b[bn]
+			myenv.wh.update_stock(int(i), 10, b.location)
 			pass # for debugging
 
-		tot_dist = sum(PickRoute(wh, o).route_distance
-						for o in orders) 
+		tot_dist = sum(PickRoute(myenv.wh, o).route_distance
+						for o in myenv.orders) 
 		
 		return tot_dist
 
@@ -229,7 +234,7 @@ USAGE
 		t = roll(f, -1) # swap locations
 		inda[t] = orig # to
 
-		return Individual(shape=(NUM_BINS,), buffer=inda)
+		return Individual(shape=(myenv.NUM_BINS,), buffer=inda)
 
 
 	def partMatched(mom, pop):
@@ -241,7 +246,7 @@ USAGE
 		# TBD size SBE randint(4, 2 * (NUM_BINS // 4)), an even number
 		
 		# at 4, 2 for mom and 2 for dad
-		dests = np.random.choice(idxs, size=6, replace=False)
+		dests = np.random.choice(myenv.idxs, size=6, replace=False)
 		
 		parents = (mom, dad)
 		children = (child_dad, child_mom)
@@ -251,11 +256,11 @@ USAGE
 			child = children[s % 1] # if parent is mom, child SBE child_dad
 			parent_gene = parent[gene_loc]
 			child_gene_replaced = child[gene_loc]
-			child_gene_replaced_loc = INDXS[np.isin(child, parent_gene)][0]
+			child_gene_replaced_loc = myenv.INDXS[np.isin(child, parent_gene)][0]
 			child[[gene_loc, child_gene_replaced_loc]] = [parent_gene, child_gene_replaced]
 			
-		return (Individual((NUM_BINS,), buffer=child_mom),
-				Individual((NUM_BINS,), buffer=child_dad))	
+		return (Individual((myenv.NUM_BINS,), buffer=child_mom),
+				Individual((myenv.NUM_BINS,), buffer=child_dad))	
 
 	
 	def calcFitness(individual):
@@ -267,9 +272,9 @@ USAGE
 	######################################################
 	
 
-	for pop_no, ind in enumerate(pop):
+	for pop_no, ind in enumerate(myenv.pop):
 		ind.fitness = evalFitness(ind)
-		if verbose:
+		if myenv.verbose:
 			msg = 'gen {:2d}: stock config {:4,d}, dist={:6,d}'.format(0, pop_no + 1, int(ind.fitness))
 			print(msg)
 		if TESTRUN and pop_no >= 1:
@@ -277,23 +282,23 @@ USAGE
 
 	
 	if RESULTS:
-		d = nparray([x.fitness for x in pop])
+		d = nparray([x.fitness for x in myenv.pop])
 		msg = 'gen {:2d} {:10s}: max: {:6,d}, min: {:6,d}, mean: {:.2f}, std: {:.2f}'\
 				.format(0, 'pop', d.max(), d.min(), d.mean(), d.std())
 		print(msg)
 
-	for gen in range(NGENS):
+	for gen in range(myenv.NGENS):
 		crossed_over = []
 
-		for pop_no, ind in enumerate(pop):
+		for pop_no, ind in enumerate(myenv.pop):
 			probCx = random()
-			if probCx <= CXPB:
-				c1, c2 = partMatched(ind, pop)
+			if probCx <= myenv.CXPB:
+				c1, c2 = partMatched(ind, myenv.pop)
 				c1.fitness = evalFitness(c1)
 				c2.fitness = evalFitness(c2)
 				crossed_over.append(c1)
 				crossed_over.append(c2)
-				if verbose: 
+				if myenv.verbose:
 					msg = 'gen {:2d}: crossover {:3,d}, dist1={:6,d}, dist2={:6,d}'.format(gen,pop_no + 1,
 																						  int(c1.fitness),
 																						  int(c2.fitness))
@@ -301,12 +306,12 @@ USAGE
 				if TESTRUN and pop_no >= 2:
 					break
 				
-		hof = pop + crossed_over
+		hof = myenv.pop + crossed_over
 		heapq.heapify(hof)
-		pop = heapq.nsmallest(NUM_BINS, hof)
+		myenv.pop = heapq.nsmallest(myenv.NUM_BINS, hof)
 		
 		if RESULTS:
-			d = nparray([x.fitness for x in pop])
+			d = nparray([x.fitness for x in myenv.pop])
 			msg = 'gen {:2d} {:10s}: max: {:6,d}, min: {:6,d}, mean: {:.2f}, std: {:.2f}'\
 					.format(gen, 'crossover', d.max(), d.min(), d.mean(), d.std())
 			print(msg)
@@ -315,15 +320,14 @@ USAGE
 		if d.max() == d.min() and d.std() == 0.0:
 			break
 
-		
 		mutated = []
 
-		for pop_no, ind in enumerate(pop):
+		for pop_no, ind in enumerate(myenv.pop):
 			probMut = random()
-			if probMut <= MUTPB:
+			if probMut <= myenv.MUTPB:
 				c1 = mutSwap(nparray(ind), 2)
 				c1.fitness = evalFitness(c1)
-				if verbose:
+				if myenv.verbose:
 					msg = 'gen {:2d}: {:10s} {:3,d}, dist={:6,d}'\
 							.format(gen, 'mutate', pop_no + 1, int(c1.fitness))
 					print(msg)
@@ -331,12 +335,12 @@ USAGE
 				if TESTRUN and pop_no >= 2:
 					break
 		
-		hof = pop + mutated
+		hof = myenv.pop + mutated
 		heapq.heapify(hof)
-		pop = heapq.nsmallest(NUM_BINS, hof)
+		myenv.pop = heapq.nsmallest(myenv.NUM_BINS, hof)
 
 		if RESULTS:
-			d = nparray([x.fitness for x in pop])
+			d = nparray([x.fitness for x in myenv.pop])
 			msg = 'gen {:2d} {:10s}: max: {:6,d}, min: {:6,d}, mean: {:.2f}, std: {:.2f}'\
 					.format(gen, 'mutate', d.max(), d.min(), d.mean(), d.std())
 
@@ -349,7 +353,7 @@ USAGE
 	if not DEBUG:
 		_, m, d, t, y = ctime().split(' ')
 		with open('pop_{}.pkl'.format(m+d+t+y), 'wb') as ofile:
-			pickle.dump(pop, ofile)
+			pickle.dump(myenv.pop, ofile)
 	
 	pass # for debugging
 	
